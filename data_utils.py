@@ -132,8 +132,8 @@ def create_labels(image_ids, images_target, dataframe):
 
 def move_images(image_ids,images_src,images_target):
     for image_id in image_ids:
-        images_src = images_src + f'/{image_id}.tif'
-        images_target = images_target + f'/{image_id}.tif'
+        img_src = images_src + f'/{image_id}.tif'
+        img_target = images_target + f'/{image_id}.tif'
         shutil.move(images_src,images_target)
 
 def cleanup(required_path,destination_path):
