@@ -5,6 +5,7 @@ import numpy as np
 import yaml
 import os
 from sklearn.model_selection import KFold
+from pathlib import Path
 
 EXP_TYPES = ["FIT","KFOLD"]
 # FIT: fit the model to the whole training set 
@@ -27,10 +28,10 @@ def convert_bbox_to_yolo(bbox,img_width,img_height):
     return [x_center_norm, y_center_norm, w_norm, h_norm]
 
 
-def convert_to_yolo_bboxes(image_ids,original_bboxes):
+def convert_to_yolo_bboxes(image_ids,original_bboxes,images_path):
     bboxes = []
     for image_id, original_bbox in zip(image_ids,original_bboxes):
-        img = Image.open(f"./data/Images/{image_id}.tif") 
+        img = Image.open(f"{images_path}/{image_id}.tif") 
         width = img.width 
         height = img.height
         yolo_bbox = convert_bbox_to_yolo(original_bbox,width,height)
@@ -40,94 +41,90 @@ def convert_to_yolo_bboxes(image_ids,original_bboxes):
 
 
 
-def setup_experiment(dataframe,images_path,exp_type="FIT",n_folds=None):
-    # creates appropriate directory strucutre, labels and YAML files based on experiment type
-    yamls = []
 
+def setup_experiment(dataframe, images_path, exp_type="FIT", n_folds=None):
+    # Creates appropriate directory structure, labels, and YAML files based on experiment type
+    yamls = []
+    
+    # Load class names from the YAML file
     yaml_file = "classes.yaml"
     with open(yaml_file, "r", encoding="utf8") as y:
         classes = yaml.safe_load(y)["names"]
-
-    parent_dir = './experiment'
+    
+    # Set up parent directory
+    parent_dir = Path(os.path.abspath('./experiment'))
     X = dataframe['image_id'].unique()
 
     if exp_type == "FIT":
+        # Set up directories for FIT experiment
+        img_target_path = parent_dir / "train" / "images"
+        label_target_path = parent_dir / "train" / "labels"
+        os.makedirs(img_target_path, exist_ok=True)
+        os.makedirs(label_target_path, exist_ok=True)
 
-        img_target_path = parent_dir + "/train" + "/images"
-        label_target_path = parent_dir+ "/train" + "/labels"
-        os.makedirs(img_target_path,exist_ok=True)
-        os.makedirs(label_target_path,exist_ok=True)
-        create_datasets(images,images_path,img_target_path,dataframe)
-        split_path = parent_dir + "/train"
-        yaml_path = split_path + "/train.yaml"
-        yamls.append(yaml_path)
+        # Create datasets for training
+        create_datasets(X, images_path, img_target_path, dataframe)
+
+        # Create YAML configuration for FIT experiment
+        yaml_path = parent_dir / "train.yaml"
+        yamls.append(str(yaml_path))
         with open(yaml_path, "w") as ds_y:
-            yaml.safe_dump(
-                {
-                    "path": split_path.as_posix(),
-                    "train": "train",
-                    "val": "train",
-                    "names": classes,
-                },
-                ds_y,
-            )
+            yaml.safe_dump({
+                "path": str(parent_dir),
+                "train": "train",
+                "val": "train",
+                "names": classes,
+            }, ds_y)
     else:
-
+        # Set up directories and configurations for cross-validation experiment
         cv = KFold(n_splits=n_folds)
-        for i,(train_indices,val_indices) in enumerate(cv.split(X)):
+        for i, (train_indices, val_indices) in enumerate(cv.split(X)):
+            train_images = X[train_indices]
+            val_images = X[val_indices]
 
-            train_images = X.loc[train_indices]
-            val_images = X.loc[val_indices]
+            for split, images in zip(["train", "val"], [train_images, val_images]):
+                img_target_path = parent_dir / f"fold_{i}" / split / "images"
+                label_target_path = parent_dir / f"fold_{i}" / split / "labels"
+                os.makedirs(img_target_path, exist_ok=True)
+                os.makedirs(label_target_path, exist_ok=True)
 
-            for split in ["train","val"]:
-                img_target_path = parent_dir + f"/fold_{i}" + f"/{split}" + "/images"
-                label_target_path = parent_dir + f"/fold_{i}" + f"/{split}" + "/labels"
-                os.makedirs(img_target_path,exist_ok=True)
-                os.makedirs(label_target_path,exist_ok=True)
+                # Create datasets for training and validation
+                create_datasets(images, images_path, img_target_path, dataframe)
+                
+                # Create YAML configuration for each fold and split
+            dataset_path = parent_dir / f"fold_{i}"
+            dataset_yaml = dataset_path / "config.yaml"
 
-                if split == "train":
-                    images = train_images
-                else:
-                    images = val_images
+            yamls.append(str(dataset_yaml))
+            with open(dataset_yaml, "w") as ds_y:
+                yaml.safe_dump({
+                    "path": str(dataset_path),
+                    "train": "train",
+                    "val": "val",
+                    "names": classes,
+                }, ds_y)
+    return yamls
 
-                create_datasets(images,images_path,img_target_path,dataframe)
-                split_path = parent_dir + f"fold_{i}" + f"/{split}"
-
-                dataset_yaml = parent_dir + f"/fold_{i}" + f"/{split}" + f"{split}.yaml"
-                yamls.append(dataset_yaml)
-
-                with open(dataset_yaml, "w") as ds_y:
-                    yaml.safe_dump(
-                        {
-                            "path": split_path.as_posix(),
-                            "train": "train",
-                            "val": "val",
-                            "names": classes,
-                        },
-                        ds_y,
-                    )
-        return yamls
-
-def create_datasets(image_ids,images_src,images_target,dataframe):
+def create_datasets(image_ids, images_src, images_target, dataframe):
     for image_id in image_ids:
         bboxes = dataframe.loc[dataframe['image_id'] == image_id]['bbox']
         labels = dataframe.loc[dataframe['image_id'] == image_id]['category_id']
-        img_original_path = f"{images_src}/{image_id}.tif"
-        img_target_path = f"{images_target}/{image_id}.tif"
-        label_target_path = img_target_path.replace("images,labels").replace(".tif",".txt")
+        img_original_path = Path(images_src) / f"{image_id}.tif"
+        img_target_path = Path(images_target) / f"{image_id}.tif"
+        label_target_path = img_target_path.with_suffix('.txt').as_posix().replace("images", "labels")
+        
         if (labels == 0).all():
             print(f"image {image_id} is empty")
             open(label_target_path, 'a').close()
         else:
-
-            with open(label_target_path,'w') as f:
+            with open(label_target_path, 'w') as f:
                 print(f"writing labels for image {image_id}")
-                for label,bbox in zip(labels,bboxes):
+                for label, bbox in zip(labels, bboxes):
                     x, y, w, h = bbox
-                    f.write(f'{label} {x} {y} {w} {h}' + '\n')
-            print(f"copying image from {img_original_path} to {img_target_path}")
-            shutil.copy(img_original_path,img_target_path) 
-
+                    f.write(f'{label} {x} {y} {w} {h}\n')
+        
+        print(f"copying image from {img_original_path} to {img_target_path}")
+        shutil.copy(img_original_path, img_target_path)
 
 
 def cleanup(required_path,destination_path):
