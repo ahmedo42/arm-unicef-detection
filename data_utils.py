@@ -42,7 +42,7 @@ def convert_to_yolo_bboxes(image_ids,original_bboxes,images_path):
 
 
 
-def setup_experiment(dataframe, images_path, exp_type="FIT", n_folds=None):
+def setup_experiment(dataframe, exp_type="FIT", n_folds=None):
     # Creates appropriate directory structure, labels, and YAML files based on experiment type
     yamls = []
     
@@ -63,7 +63,7 @@ def setup_experiment(dataframe, images_path, exp_type="FIT", n_folds=None):
         os.makedirs(label_target_path, exist_ok=True)
 
         # Create datasets for training
-        create_datasets(X, images_path, img_target_path, dataframe)
+        create_labels(X , img_target_path, dataframe)
 
         # Create YAML configuration for FIT experiment
         yaml_path = parent_dir / "train.yaml"
@@ -75,21 +75,28 @@ def setup_experiment(dataframe, images_path, exp_type="FIT", n_folds=None):
                 "val": "train",
                 "names": classes,
             }, ds_y)
+
+        return yamls
+    
     else:
         # Set up directories and configurations for cross-validation experiment
+        train_images = [] 
+        val_images = [] 
         cv = KFold(n_splits=n_folds)
         for i, (train_indices, val_indices) in enumerate(cv.split(X)):
-            train_images = X[train_indices]
-            val_images = X[val_indices]
+            fold_train_images = X[train_indices]
+            fold_val_images = X[val_indices]
+            train_images.append(fold_train_images)
+            val_images.append(fold_val_images)
 
-            for split, images in zip(["train", "val"], [train_images, val_images]):
+            for split, images in zip(["train", "val"], [fold_train_images, fold_val_images]):
                 img_target_path = parent_dir / f"fold_{i}" / split / "images"
                 label_target_path = parent_dir / f"fold_{i}" / split / "labels"
                 os.makedirs(img_target_path, exist_ok=True)
                 os.makedirs(label_target_path, exist_ok=True)
 
                 # Create datasets for training and validation
-                create_datasets(images, images_path, img_target_path, dataframe)
+                create_labels(images, img_target_path, dataframe)
                 
                 # Create YAML configuration for each fold and split
             dataset_path = parent_dir / f"fold_{i}"
@@ -103,13 +110,13 @@ def setup_experiment(dataframe, images_path, exp_type="FIT", n_folds=None):
                     "val": "val",
                     "names": classes,
                 }, ds_y)
-    return yamls
 
-def create_datasets(image_ids, images_src, images_target, dataframe):
+        return yamls, train_images, val_images
+
+def create_labels(image_ids, images_target, dataframe):
     for image_id in image_ids:
         bboxes = dataframe.loc[dataframe['image_id'] == image_id]['bbox']
         labels = dataframe.loc[dataframe['image_id'] == image_id]['category_id']
-        img_original_path = Path(images_src) / f"{image_id}.tif"
         img_target_path = Path(images_target) / f"{image_id}.tif"
         label_target_path = img_target_path.with_suffix('.txt').as_posix().replace("images", "labels")
         
@@ -122,10 +129,12 @@ def create_datasets(image_ids, images_src, images_target, dataframe):
                 for label, bbox in zip(labels, bboxes):
                     x, y, w, h = bbox
                     f.write(f'{label} {x} {y} {w} {h}\n')
-        
-        print(f"copying image from {img_original_path} to {img_target_path}")
-        shutil.copy(img_original_path, img_target_path)
 
+def move_images(image_ids,images_src,images_target):
+    for image_id in image_ids:
+        images_src = (images_src / image_id + '.tif')
+        images_target = (images_target / image_id + '.tif')
+        shutil.move(images_src,images_target)
 
 def cleanup(required_path,destination_path):
     # deletes directory of a fold and restores data to the original parent directory
