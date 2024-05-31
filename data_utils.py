@@ -130,11 +130,11 @@ def create_labels(image_ids, images_target, dataframe):
                     x, y, w, h = bbox
                     f.write(f'{label} {x} {y} {w} {h}\n')
 
-def move_images(image_ids,images_src,images_target):
+def copy_images(image_ids,images_src,images_target):
     for image_id in image_ids:
         img_src = images_src + f'/{image_id}.tif'
         img_target = images_target + f'/{image_id}.tif'
-        shutil.move(images_src,images_target)
+        shutil.copy(img_src,img_target)
 
 def cleanup(required_path,destination_path):
     # deletes directory of a fold and restores data to the original parent directory
