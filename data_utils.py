@@ -42,7 +42,7 @@ def convert_to_yolo_bboxes(image_ids,original_bboxes,images_path):
 
 
 
-def setup_experiment(dataframe, exp_type="FIT", n_folds=None):
+def setup_experiment(dataframe, exp_type="FIT", n_folds=None, seed=42):
     # Creates appropriate directory structure, labels, and YAML files based on experiment type
     yamls = []
     
@@ -82,7 +82,7 @@ def setup_experiment(dataframe, exp_type="FIT", n_folds=None):
         # Set up directories and configurations for cross-validation experiment
         train_images = [] 
         val_images = [] 
-        cv = KFold(n_splits=n_folds)
+        cv = KFold(n_splits=n_folds,shuffle=True,random_state=42)
         for i, (train_indices, val_indices) in enumerate(cv.split(X)):
             fold_train_images = X[train_indices]
             fold_val_images = X[val_indices]
