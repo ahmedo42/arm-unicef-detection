@@ -135,38 +135,3 @@ def copy_images(image_ids,images_src,images_target):
         img_src = images_src + f'/{image_id}.tif'
         img_target = images_target + f'/{image_id}.tif'
         shutil.copy(img_src,img_target)
-
-def cleanup(required_path,destination_path):
-    # deletes directory of a fold and restores data to the original parent directory
-    # useful for "undoing" cross-validation 
-    os.makedirs(destination_path, exist_ok=True)
-    for root, _, files in os.walk(required_path):
-        for file in files:
-            if file.lower().endswith('.tif'):
-                source_file_path = os.path.join(root, file)
-                target_file_path = os.path.join(destination_path, file)
-                
-                shutil.move(source_file_path, target_file_path)
-    
-    shutil.rmtree(required_path)
-
-
-
-def create_img_label_mapping(df):
-
-    images = df['image_id'].unique()
-    image_ids = []
-    labels = []
-    for image_id in images:
-        categories = df.loc[df['image_id'] == image_id]['category_id']
-        label =  ''.join(sorted([str(l) for l in categories.unique()]))
-        image_ids.append(image_id)
-        labels.append(label)
-
-    labels_df = pd.DataFrame(
-        {
-            "image_id" : image_ids,
-            "label": labels,
-        }
-    )
-    return labels_df
