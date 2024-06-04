@@ -7,12 +7,8 @@ import os
 from sklearn.model_selection import KFold
 from pathlib import Path
 
-EXP_TYPES = ["FIT","KFOLD"]
-# FIT: fit the model to the whole training set 
-# KFOLD: kfold cv
 
 def convert_bbox_to_yolo(bbox,img_width,img_height):
-    # converts the default x,y,w,h labelling scheme to yolo compatible labelling
     if bbox == 0:
         return []
     string = bbox.replace('[', '').replace(']', '')
@@ -42,30 +38,24 @@ def convert_to_yolo_bboxes(image_ids,original_bboxes,images_path):
 
 
 
-def setup_experiment(dataframe, exp_type="FIT", n_folds=None, seed=42):
-    # Creates appropriate directory structure, labels, and YAML files based on experiment type
+def setup_experiment(dataframe, exp_type="fit", n_folds=None, seed=42):
     yamls = []
     
-    # Load class names from the YAML file
     yaml_file = "classes.yaml"
     with open(yaml_file, "r", encoding="utf8") as y:
         classes = yaml.safe_load(y)["names"]
     
-    # Set up parent directory
     parent_dir = Path(os.path.abspath('./experiment'))
     X = dataframe['image_id'].unique()
 
-    if exp_type == "FIT":
-        # Set up directories for FIT experiment
+    if exp_type == "fit":
         img_target_path = parent_dir / "train" / "images"
         label_target_path = parent_dir / "train" / "labels"
         os.makedirs(img_target_path, exist_ok=True)
         os.makedirs(label_target_path, exist_ok=True)
 
-        # Create datasets for training
         create_labels(X , img_target_path, dataframe)
 
-        # Create YAML configuration for FIT experiment
         yaml_path = parent_dir / "train.yaml"
         yamls.append(str(yaml_path))
         with open(yaml_path, "w") as ds_y:
@@ -79,7 +69,6 @@ def setup_experiment(dataframe, exp_type="FIT", n_folds=None, seed=42):
         return yamls
     
     else:
-        # Set up directories and configurations for cross-validation experiment
         train_images = [] 
         val_images = [] 
         cv = KFold(n_splits=n_folds,shuffle=True,random_state=42)
@@ -95,10 +84,8 @@ def setup_experiment(dataframe, exp_type="FIT", n_folds=None, seed=42):
                 os.makedirs(img_target_path, exist_ok=True)
                 os.makedirs(label_target_path, exist_ok=True)
 
-                # Create datasets for training and validation
                 create_labels(images, img_target_path, dataframe)
                 
-                # Create YAML configuration for each fold and split
             dataset_path = parent_dir / f"fold_{i}"
             dataset_yaml = dataset_path / "config.yaml"
 
@@ -135,3 +122,13 @@ def copy_images(image_ids,images_src,images_target):
         img_src = images_src + f'/{image_id}.tif'
         img_target = images_target + f'/{image_id}.tif'
         shutil.copy(img_src,img_target)
+
+
+def load_data(dataset_path,mode='fit'):
+    if mode == 'fit':
+        train_df = pd.read_csv(f"{dataset_path}/Train.csv")
+        return train_df    
+    else:
+        ss = pd.read_csv(f"{dataset_path}/SampleSubmission.csv")
+        test = pd.read_csv(f"{dataset_path}/Test.csv")
+        return test, ss
