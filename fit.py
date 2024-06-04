@@ -26,8 +26,8 @@ def fit():
     model = YOLO(config['model_name'])
     images_src =  config['dataset_path'] +"/Images/"
     images_train_target = f"./experiment/train/images"
-    copy_images(train_df['image_id'].unique(),images_src,images_train_target)
     yamls = setup_experiment(train_df,exp_type='fit',seed=config['seed'])
+    copy_images(train_df['image_id'].unique(),images_src,images_train_target)
     close_mosiac = config['epochs'] // 10
 
     results = model.train(
