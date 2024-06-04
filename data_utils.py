@@ -6,7 +6,7 @@ import yaml
 import os
 from sklearn.model_selection import KFold
 from pathlib import Path
-
+import wandb
 
 def convert_bbox_to_yolo(bbox,img_width,img_height):
     if bbox == 0:
@@ -135,3 +135,8 @@ def load_data(dataset_path,mode='fit'):
         ss = pd.read_csv(f"{dataset_path}/SampleSubmission.csv")
         test = pd.read_csv(f"{dataset_path}/Test.csv")
         return test, ss
+    
+
+def setup_logging(job_type='training'):
+    wandb.login(os.environ['api_key'])
+    wandb.init(project="arm-unicef", job_type=job_type)

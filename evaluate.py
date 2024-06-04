@@ -1,5 +1,5 @@
 from ultralytics import YOLO 
-from data_utils import copy_images,load_data,setup_experiment
+from data_utils import copy_images,load_data,setup_experiment,setup_logging
 import argparse
 import shutil
 import math 
@@ -25,6 +25,7 @@ args = parser.parse_args()
 def evaluate():
     config = vars(args)
     train_df = load_data(config['datset_path'])
+    setup_logging(job_type='eval')
     results = {} 
     for i in range(config['n_splits']):
         model = YOLO(config['model_name'])
@@ -34,7 +35,7 @@ def evaluate():
         yamls,train_images,val_images = setup_experiment(train_df,exp_type='eval',seed=config['seed'])
         copy_images(train_images,images_src,images_train_target)
         copy_images(val_images,images_src,images_val_target)
-        close_mosiac = config['epochs'] // 10
+        close_mosaic = config['epochs'] // 10
         warmup_epochs = math.ceil(config['epochs'] // 100)
         results[i] = model.train(
             data = yamls[i],
@@ -47,7 +48,7 @@ def evaluate():
             batch = config['batch'],
             dropout = config['dropout'],
             seed = config['seed '],
-            close_mosiac = close_mosiac,
+            close_mosaic = close_mosaic,
             warmup_epochs = warmup_epochs
         )
         shutil.rmtree(f"./experiment/fold_{i}")

@@ -1,5 +1,5 @@
 from ultralytics import YOLO 
-from data_utils import copy_images,load_data,setup_experiment
+from data_utils import copy_images,load_data,setup_experiment,setup_logging
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--seed", type=int, default=42)
@@ -23,15 +23,17 @@ def fit():
     config = vars(args)
     print(config)
     train_df = load_data(config['dataset_path'])
+    setup_logging(job_type='training')
     model = YOLO(config['model_name'])
     images_src =  config['dataset_path'] +"/Images/"
     images_train_target = f"./experiment/train/images"
     yamls = setup_experiment(train_df,exp_type='fit',seed=config['seed'])
     copy_images(train_df['image_id'].unique(),images_src,images_train_target)
-    close_mosiac = config['epochs'] // 10
+    close_mosaic = config['epochs'] // 10
 
     results = model.train(
         data = yamls[0],
+        task = 'detect',
         project = config['project'],
         epochs = config['epochs'],
         imgsz = config['imgsz'],
@@ -42,7 +44,7 @@ def fit():
         seed = config['seed'],
         plots=False,
         val=False,
-        close_mosiac = close_mosiac,
+        close_mosaic = close_mosaic,
         optimizer = config['optimizer'],
         lr0 = config['lr0'],
     )
