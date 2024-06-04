@@ -21,7 +21,6 @@ args = parser.parse_args()
 
 def fit():
     config = vars(args)
-    print(config)
     train_df = load_data(config['dataset_path'])
     setup_logging(job_type='training')
     model = YOLO(config['model_name'])
@@ -43,7 +42,6 @@ def fit():
         dropout = config['dropout'],
         seed = config['seed'],
         plots=False,
-        val=False,
         close_mosaic = close_mosaic,
         optimizer = config['optimizer'],
         lr0 = config['lr0'],
