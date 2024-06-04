@@ -9,7 +9,7 @@ from pathlib import Path
 import wandb
 
 def convert_bbox_to_yolo(bbox,img_width,img_height):
-    if bbox == -1:
+    if bbox == 0:
         return []
     string = bbox.replace('[', '').replace(']', '')
     string_list = string.split(',')
@@ -107,7 +107,7 @@ def create_labels(image_ids, images_target, dataframe):
         img_target_path = Path(images_target) / f"{image_id}.tif"
         label_target_path = img_target_path.with_suffix('.txt').as_posix().replace("images", "labels")
         
-        if (labels == -1).all():
+        if (labels == 0).all():
             # don't create labels for the empty images
             continue
         else:
@@ -126,7 +126,7 @@ def copy_images(image_ids,images_src,images_target):
 def load_data(dataset_path,mode='fit'):
     if mode == 'fit':
         train_df = pd.read_csv(f"{dataset_path}/Train.csv")
-        train_df.fillna(-1,inplace=True)
+        train_df.fillna(0,inplace=True)
         train_df['category_id'] = train_df['category_id'].map(int)
         train_df['bbox'] = convert_to_yolo_bboxes(train_df['image_id'],train_df['bbox'],dataset_path+"/Images")
         return train_df    

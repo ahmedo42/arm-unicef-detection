@@ -26,8 +26,7 @@ def predict():
         preds = model.predict(img_path_subset,conf=config['conf'] , iou = config['iou'])
         for pred,img_path in zip(preds,img_path_subset):
             classes = pred.boxes.cls.cpu().tolist()
-            # increment classes by 1 to match competition mapping
-            classes = collections.Counter([c+1 for c in classes])
+            classes = collections.Counter([c for c in classes])
             image_id = os.path.splitext(os.path.basename(img_path))[0]
             for cls,count in classes.items():
                 composite_name = image_id + '_' + str(int(cls))
