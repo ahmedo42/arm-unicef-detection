@@ -71,7 +71,7 @@ def setup_experiment(dataframe, exp_type="fit", n_folds=None, seed=42):
     else:
         train_images = [] 
         val_images = [] 
-        cv = KFold(n_splits=n_folds,shuffle=True,random_state=42)
+        cv = KFold(n_splits=n_folds,shuffle=True,random_state=seed)
         for i, (train_indices, val_indices) in enumerate(cv.split(X)):
             fold_train_images = X[train_indices]
             fold_val_images = X[val_indices]
@@ -108,11 +108,10 @@ def create_labels(image_ids, images_target, dataframe):
         label_target_path = img_target_path.with_suffix('.txt').as_posix().replace("images", "labels")
         
         if (labels == -1).all():
-            print(f"image {image_id} is empty")
-            open(label_target_path, 'a').close()
+            # don't create labels for the empty images
+            continue
         else:
             with open(label_target_path, 'w') as f:
-                print(f"writing labels for image {image_id}")
                 for label, bbox in zip(labels, bboxes):
                     x, y, w, h = bbox
                     f.write(f'{label} {x} {y} {w} {h}\n')
