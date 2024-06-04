@@ -127,6 +127,9 @@ def copy_images(image_ids,images_src,images_target):
 def load_data(dataset_path,mode='fit'):
     if mode == 'fit':
         train_df = pd.read_csv(f"{dataset_path}/Train.csv")
+        train_df.fillna(0,inplace=True)
+        train_df['category_id'] = train_df['category_id'].map(int)
+        train_df['bbox'] = convert_to_yolo_bboxes(train_df['image_id'],train_df['bbox'],dataset_path+"/Images")
         return train_df    
     else:
         ss = pd.read_csv(f"{dataset_path}/SampleSubmission.csv")
