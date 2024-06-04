@@ -21,29 +21,30 @@ args = parser.parse_args()
 
 def fit():
     config = vars(args)
-    train_df = load_data(config.dataset_path)
-    model = YOLO(config.model_name,)
-    images_src =  config.data +"/Images/"
+    print(config)
+    train_df = load_data(config['dataset_path'])
+    model = YOLO(config['model_name'])
+    images_src =  config['dataset_path'] +"/Images/"
     images_train_target = f"./experiment/train/images"
     copy_images(train_df['image_id'].unique(),images_src,images_train_target)
-    yamls = setup_experiment(train_df,exp_type='fit',seed=config.seed)
-    close_mosiac = config.epochs // 10
+    yamls = setup_experiment(train_df,exp_type='fit',seed=config['seed'])
+    close_mosiac = config['epochs'] // 10
 
     results = model.train(
         data = yamls[0],
-        project = config.project,
-        epochs = config.epochs,
-        imgsz = config.imgsz,
-        box = config.box,
-        cls = config.cls,
-        batch = config.batch,
-        dropout = config.dropout,
-        seed = config.seed,
+        project = config['project'],
+        epochs = config['epochs'],
+        imgsz = config['imgsz'],
+        box = config['box'],
+        cls = config['cls'],
+        batch = config['batch'],
+        dropout = config['dropout'],
+        seed = config['seed'],
         plots=False,
         val=False,
         close_mosiac = close_mosiac,
-        optimizer = config.optimizer,
-        lr0 = config.lr0,
+        optimizer = config['optimizer'],
+        lr0 = config['lr0'],
     )
     return results
 

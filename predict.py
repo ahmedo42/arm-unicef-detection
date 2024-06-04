@@ -15,15 +15,15 @@ args = parser.parse_args()
 
 def predict():
     config = vars(args)
-    test, ss = load_data(config.dataset_path)
-    model = YOLO(config.model_path)
+    test, ss = load_data(config['dataset_path'])
+    model = YOLO(config['model_path'])
     image_paths = []
     for image_id in test['image_id']:
-        image_paths.append(os.path.join(config.dataset_path,image_id+'.tif'))
+        image_paths.append(os.path.join(config['dataset_path'],image_id+'.tif'))
 
-    for img_idx in range(0,len(image_paths),config.batch):
-        img_path_subset = image_paths[img_idx : img_idx + config.batch]
-        preds = model.predict(img_path_subset,conf=config.conf , iou = config.iou)
+    for img_idx in range(0,len(image_paths),config['batch']):
+        img_path_subset = image_paths[img_idx : img_idx + config['batch']]
+        preds = model.predict(img_path_subset,conf=config['conf'] , iou = config['iou'])
         for pred,img_path in zip(preds,img_path_subset):
             classes = pred.boxes.cls.cpu().tolist()
             # increment classes by 1 to match competition mapping
