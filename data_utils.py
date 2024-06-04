@@ -138,5 +138,5 @@ def load_data(dataset_path,mode='fit'):
     
 
 def setup_logging(job_type='training'):
-    wandb.login(os.environ['api_key'])
+    wandb.login(key=os.environ['api_key'])
     wandb.init(project="arm-unicef", job_type=job_type)
