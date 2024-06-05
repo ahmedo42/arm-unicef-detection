@@ -16,7 +16,6 @@ def tune():
     config = vars(args)
     setup_logging(job_type='tune')
     train_df = load_data(config['dataset_path'])
-
     model = YOLO(config['model_name'])
     images_src =  config['dataset_path'] +"/Images/"
     images_train_target = f"./experiment/train/images"

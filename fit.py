@@ -14,7 +14,7 @@ parser.add_argument("--model_name", type=str, default='yolov8n.pt')
 parser.add_argument("--project", type=str, default='fitting')
 parser.add_argument("--lr0", type=float, default= 1e-3)
 parser.add_argument("--optimizer", type=str, default= 'Adam')
-
+parser.add_argument("--flipud", type=float, default= 0.0)
 
 args = parser.parse_args()
 
@@ -29,6 +29,7 @@ def fit():
     yamls = setup_experiment(train_df,exp_type='fit',seed=config['seed'])
     copy_images(train_df['image_id'].unique(),images_src,images_train_target)
     close_mosaic = config['epochs'] // 10
+
 
     model.train(
         data = yamls[0],
@@ -45,6 +46,8 @@ def fit():
         close_mosaic = close_mosaic,
         optimizer = config['optimizer'],
         lr0 = config['lr0'],
+        warmup_epochs=0.3,
+        flipud=config['flipud']
     )
 
 if __name__ == "__main__":
