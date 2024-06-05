@@ -17,7 +17,7 @@ def tune():
     train_df = load_data(config['dataset_path'])
     model = YOLO(config['model_name'])
     images_src =  config['dataset_path'] +"/Images/"
-    images_train_target = f"./experiment/tune/images"
+    images_train_target = f"./experiment/train/images"
     yamls = setup_experiment(train_df,exp_type='fit',seed=config['seed'])
     copy_images(train_df['image_id'].unique(),images_src,images_train_target)
 
