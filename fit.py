@@ -30,7 +30,7 @@ def fit():
     copy_images(train_df['image_id'].unique(),images_src,images_train_target)
     close_mosaic = config['epochs'] // 10
 
-    results = model.train(
+    model.train(
         data = yamls[0],
         task = 'detect',
         project = config['project'],
@@ -46,8 +46,6 @@ def fit():
         optimizer = config['optimizer'],
         lr0 = config['lr0'],
     )
-    return results
-
 
 if __name__ == "__main__":
     fit()

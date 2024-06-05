@@ -53,8 +53,5 @@ def evaluate():
         )
         shutil.rmtree(f"./experiment/fold_{i}")
 
-    return results
-
-
 if __name__ == "__main__":
     evaluate()

@@ -31,7 +31,8 @@ def predict():
             for cls,count in classes.items():
                 composite_name = image_id + '_' + str(int(cls))
                 ss.loc[ss['image_id'] == composite_name,'Target'] = count 
-    return ss 
+                
+    ss.to_csv('sub.csv',index=False)
 
 if __name__ == '__main__':
     predict()

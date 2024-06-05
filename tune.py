@@ -22,7 +22,7 @@ def tune():
     copy_images(train_df['image_id'].unique(),images_src,images_train_target)
     yamls = setup_experiment(train_df,exp_type='fit',seed=config['seed'])
 
-    results = model.tune(
+    model.tune(
         data = yamls[0],
         project = config['project'],
         epochs = config['epochs'],
@@ -32,8 +32,6 @@ def tune():
         plots=False,
         val=False,
     )
-    return results
-
 
 if __name__ == "__main__":
     tune()
