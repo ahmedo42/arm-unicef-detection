@@ -19,7 +19,7 @@ def predict():
     model = YOLO(config['model_path'])
     image_paths = []
     for image_id in test['image_id']:
-        image_paths.append(os.path.join(config['dataset_path'],image_id+'.tif'))
+        image_paths.append(os.path.join(config['dataset_path'] + '/Images',image_id+'.tif'))
 
     for img_idx in range(0,len(image_paths),config['batch']):
         img_path_subset = image_paths[img_idx : img_idx + config['batch']]
