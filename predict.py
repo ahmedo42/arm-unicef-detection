@@ -15,7 +15,7 @@ args = parser.parse_args()
 
 def predict():
     config = vars(args)
-    test, ss = load_data(config['dataset_path'])
+    test, ss = load_data(config['dataset_path'],mode='predict')
     model = YOLO(config['model_path'])
     image_paths = []
     for image_id in test['image_id']:
