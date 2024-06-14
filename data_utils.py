@@ -108,13 +108,12 @@ def create_labels(image_ids, images_target, dataframe):
         label_target_path = img_target_path.with_suffix('.txt').as_posix().replace("images", "labels")
         
         if (labels == 0).all():
-            # don't create labels for the empty images
             continue
         else:
             with open(label_target_path, 'w') as f:
                 for label, bbox in zip(labels, bboxes):
                     x, y, w, h = bbox
-                    f.write(f'{label} {x} {y} {w} {h}\n')
+                    f.write(f'{label - 1} {x} {y} {w} {h}\n')
 
 def copy_images(image_ids,images_src,images_target):
     for image_id in image_ids:
